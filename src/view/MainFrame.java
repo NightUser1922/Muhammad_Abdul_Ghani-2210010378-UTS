@@ -10,6 +10,8 @@ import utils.FileHandler;
 import javax.swing.table.DefaultTableModel;
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
+import javax.swing.JFileChooser;
+import java.io.File;
 
 
 public class MainFrame extends javax.swing.JFrame {
@@ -21,7 +23,18 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         initComponents();
         tampilkanData();
+       aturModelTabel(); 
     }
+  private void aturModelTabel() {
+    // Membuat model baru untuk JTable
+    DefaultTableModel model = new DefaultTableModel(
+        new Object[][]{},        // Data awal kosong
+        new String[]{"ID", "Nama", "Telepon", "Email"} // Header kolom
+    );
+
+    tblKontak.setModel(model); // Terapkan model ke JTable
+}
+
  private void tampilkanData() {
         DefaultTableModel model = (DefaultTableModel) tblKontak.getModel();
         model.setRowCount(0);
@@ -260,7 +273,7 @@ public class MainFrame extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(tblKontak);
 
-        lblStatus.setText("Status :....");
+        lblStatus.setText("Status");
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -324,19 +337,53 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
-        int row = tblKontak.getSelectedRow();
-        if (row >= 0) {
+    int row = tblKontak.getSelectedRow();
+
+    if (row >= 0) {
+        int pilihan = JOptionPane.showConfirmDialog(
+                this,
+                "Apakah Anda yakin ingin menghapus kontak ini?",
+                "Konfirmasi Hapus",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        // Jika pengguna memilih "Yes"
+        if (pilihan == JOptionPane.YES_OPTION) {
             controller.hapus(row);
             tampilkanData();
+            lblStatus.setText("Status: Kontak berhasil dihapus.");
+            JOptionPane.showMessageDialog(this, "Kontak telah dihapus.");
+        } else {
+            lblStatus.setText("Status: Penghapusan dibatalkan.");
         }
+
+    } else {
+        JOptionPane.showMessageDialog(this, "Pilih data yang ingin dihapus terlebih dahulu!", 
+                                      "Peringatan", JOptionPane.WARNING_MESSAGE);
+    }
+
     }//GEN-LAST:event_btnHapusActionPerformed
 
     private void btnImporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnImporActionPerformed
-        ArrayList<Contact> data = FileHandler.importFromTxt("data_kontak.txt");
+    JFileChooser chooser = new JFileChooser();
+    chooser.setDialogTitle("Pilih file data kontak (.txt)");
+    int userSelection = chooser.showOpenDialog(this);
+
+    if (userSelection == JFileChooser.APPROVE_OPTION) {
+        File selectedFile = chooser.getSelectedFile();
+        String filePath = selectedFile.getAbsolutePath();
+
+        ArrayList<Contact> data = utils.FileHandler.importFromTxt(filePath);
+
+        // Hapus data lama dan tambahkan data baru
         for (Contact c : data) {
             controller.tambah(c);
         }
         tampilkanData();
+        JOptionPane.showMessageDialog(this, "📂 Data berhasil diimpor dari:\n" + filePath);
+    }
+
     }//GEN-LAST:event_btnImporActionPerformed
 
     private void btnTambahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahActionPerformed
@@ -347,13 +394,34 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnTambahActionPerformed
 
     private void btnUbahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUbahActionPerformed
-        int row = tblKontak.getSelectedRow();
-        if (row >= 0) {
+    int row = tblKontak.getSelectedRow();
+    if (row >= 0) {
+        // Tampilkan dialog konfirmasi
+        int pilihan = JOptionPane.showConfirmDialog(
+                this,
+                "Apakah Anda yakin ingin mengubah data kontak ini?",
+                "Konfirmasi Ubah",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (pilihan == JOptionPane.YES_OPTION) {
             Contact c = new Contact(txtNama.getText(), txtTelepon.getText(), txtEmail.getText());
             controller.ubah(row, c);
             tampilkanData();
             bersihkanInput();
+            lblStatus.setText("Status: Data kontak berhasil diubah.");
+            JOptionPane.showMessageDialog(this, "Kontak telah diperbarui!");
+        } else {
+            lblStatus.setText("Status: Perubahan dibatalkan.");
         }
+    } else {
+        JOptionPane.showMessageDialog(this,
+                "Pilih data yang ingin diubah terlebih dahulu!",
+                "Peringatan",
+                JOptionPane.WARNING_MESSAGE);
+    }
+
     }//GEN-LAST:event_btnUbahActionPerformed
 
     private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResetActionPerformed
@@ -361,8 +429,49 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_btnResetActionPerformed
 
     private void btnEksporActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEksporActionPerformed
-        FileHandler.exportToTxt(controller.getAll(), "data_kontak.txt");
-        JOptionPane.showMessageDialog(this, "Data berhasil diekspor ke data_kontak.txt");
+
+    int pilihan = JOptionPane.showConfirmDialog(
+            this,
+            "Apakah Anda yakin ingin mengekspor semua data kontak?",
+            "Konfirmasi Ekspor",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+    );
+
+    // Jika pengguna menekan "Yes"
+    if (pilihan == JOptionPane.YES_OPTION) {
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Pilih lokasi untuk menyimpan data kontak");
+
+        int userSelection = chooser.showSaveDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = chooser.getSelectedFile();
+
+            // Pastikan file berekstensi .txt
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".txt")) {
+                filePath += ".txt";
+            }
+
+            // Ekspor data ke file
+            utils.FileHandler.exportToTxt(controller.getAll(), filePath);
+
+            JOptionPane.showMessageDialog(this,
+                    "✅ Data berhasil diekspor ke:\n" + filePath,
+                    "Ekspor Berhasil",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            lblStatus.setText("Status: Data berhasil diekspor ke " + filePath);
+        } else {
+            lblStatus.setText("Status: Ekspor dibatalkan oleh pengguna.");
+        }
+
+    } else {
+        // Jika pengguna menekan "No"
+        lblStatus.setText("Status: Ekspor dibatalkan.");
+    }
+
     }//GEN-LAST:event_btnEksporActionPerformed
 
     /**

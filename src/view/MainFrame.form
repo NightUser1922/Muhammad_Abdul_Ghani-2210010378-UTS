@@ -411,7 +411,7 @@
         </Container>
         <Component class="javax.swing.JLabel" name="lblStatus">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Status :...."/>
+            <Property name="text" type="java.lang.String" value="Status"/>
           </Properties>
         </Component>
       </SubComponents>
