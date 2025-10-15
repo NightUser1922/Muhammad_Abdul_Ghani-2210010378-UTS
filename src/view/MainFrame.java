@@ -23,7 +23,24 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         initComponents();
         tampilkanData();
-       aturModelTabel(); 
+       aturModelTabel();
+           String filePath = "data_kontak.txt";
+    java.util.ArrayList<Contact> data = utils.FileHandler.importFromTxt(filePath);
+    for (Contact c : data) {
+        controller.tambah(c);
+    }
+    tampilkanData();
+    lblStatus.setText("Status: Data otomatis dimuat dari " + filePath);
+
+    // ==== AUTO SAVE SAAT WINDOW DITUTUP ====
+    this.addWindowListener(new java.awt.event.WindowAdapter() {
+        @Override
+        public void windowClosing(java.awt.event.WindowEvent e) {
+            utils.FileHandler.exportToTxt(controller.getAll(), filePath);
+            System.out.println("💾 Data otomatis disimpan sebelum aplikasi ditutup.");
+            lblStatus.setText("Status: Data otomatis disimpan ke " + filePath);
+        }
+    });
     }
   private void aturModelTabel() {
     // Membuat model baru untuk JTable
